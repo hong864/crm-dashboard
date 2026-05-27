@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>CRM 관리 바인더 2026 — 대시보드</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    background: #f5f6f8; color: #1a1a1a;
+    font-size: 14px; line-height: 1.5;
+  }
+  .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .header { margin-bottom: 20px; }
+  .header h1 { margin: 0 0 6px 0; font-size: 22px; font-weight: 700; }
+  .header .sub { color: #6b7280; font-size: 13px; }
+  .tabs { display: flex; gap: 4px; margin: 20px 0 24px 0; background: #f3f4f6; padding: 4px; border-radius: 10px; flex-wrap: wrap; }
+  .tab { padding: 8px 14px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: #4b5563; border: none; background: transparent; transition: all .15s; }
+  .tab:hover { color: #111827; }
+  .tab.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .kpi .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+  .kpi .value { font-size: 22px; font-weight: 700; color: #111827; letter-spacing: -0.5px; }
+  .kpi .sub { font-size: 11px; color: #6b7280; margin-top: 4px; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-grid.full { grid-template-columns: 1fr; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; }
+  .card h3 { margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #111827; }
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-wrap.tall { height: 380px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f0f0f3; }
+  th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 11.5px; text-transform: uppercase; letter-spacing: .3px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .funnel-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f3; }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-stage { width: 110px; font-weight: 600; color: #374151; font-size: 13px; }
+  .funnel-bar { flex: 1; background: #f3f4f6; border-radius: 6px; height: 24px; position: relative; overflow: hidden; }
+  .funnel-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; border-radius: 6px; transition: width .6s; }
+  .funnel-val { width: 180px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #111827; }
+  .funnel-rate { width: 60px; text-align: right; font-size: 12px; color: #6b7280; }
+  .updated { text-align: right; font-size: 11px; color: #9ca3af; margin-top: 16px; }
+  @media (max-width: 900px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📊 CRM 관리 바인더 2026 — 대시보드</h1>
+    <div class="sub" id="subtitle">데이터 로딩 중...</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">한눈에</button>
+    <button class="tab" data-tab="funnel">🎯 퍼널 (3월)</button>
+    <button class="tab" data-tab="monthly">📅 월간 트렌드</button>
+    <button class="tab" data-tab="channel">📡 채널 믹스</button>
+    <button class="tab" data-tab="weekly">📊 주간 비교</button>
+    <button class="tab" data-tab="campaigns">🏆 캠페인 TOP</button>
+  </div>
+
+  <!-- Overview -->
+  <div class="panel active" id="overview">
+    <div class="kpi-row" id="kpi-cards"></div>
+    <div class="chart-grid">
+      <div class="card">
+        <h3>월별 판매금액 (백만원)</h3>
+        <div class="chart-wrap"><canvas id="ch-monthly-rev"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>월별 ROAS (배)</h3>
+        <div class="chart-wrap"><canvas id="ch-monthly-roas"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>판매금액 채널 비중</h3>
+        <div class="chart-wrap"><canvas id="ch-channel-pie"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>월별 클릭수 vs 전환율</h3>
+        <div class="chart-wrap"><canvas id="ch-click-conv"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Funnel -->
+  <div class="panel" id="funnel">
+    <div class="card">
+      <h3>3월 퍼널 — 발송 → 클릭 → 방문 → 주문</h3>
+      <div id="funnel-content"></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>월별 퍼널 비교</h3>
+      <div class="chart-wrap tall"><canvas id="ch-funnel"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Monthly -->
+  <div class="panel" id="monthly">
+    <div class="card">
+      <h3>월별 종합 지표</h3>
+      <table id="tbl-monthly"></table>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>월별 매출 & ROAS</h3>
+      <div class="chart-wrap tall"><canvas id="ch-monthly-combo"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>브랜드별 월간 매출</h3>
+      <div class="chart-wrap tall"><canvas id="ch-brand-monthly"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Channel mix -->
+  <div class="panel" id="channel">
+    <div class="chart-grid">
+      <div class="card">
+        <h3>브랜드별 매출 비중</h3>
+        <div class="chart-wrap"><canvas id="ch-brand-pie"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>채널별 매출 비중</h3>
+        <div class="chart-wrap"><canvas id="ch-channel-pie2"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>방식별 매출 (카톡 / LMS / Push 등)</h3>
+        <div class="chart-wrap"><canvas id="ch-method"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>채널 × 매출 상세</h3>
+        <table id="tbl-channel"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly -->
+  <div class="panel" id="weekly">
+    <div class="card">
+      <h3>주별 매출 트렌드 (월-주 기준)</h3>
+      <div class="chart-wrap tall"><canvas id="ch-weekly"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>주별 상세</h3>
+      <table id="tbl-weekly"></table>
+    </div>
+  </div>
+
+  <!-- Campaigns -->
+  <div class="panel" id="campaigns">
+    <div class="card">
+      <h3>매출 TOP 캠페인</h3>
+      <table id="tbl-campaigns"></table>
+    </div>
+  </div>
+
+  <div class="updated" id="updated"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
+const DATA = {"totals": {"sends": 6332830.0, "clicks": 842248.0, "visits": 386947.0, "order_customers": 5302.0, "revenue": 1474191940.0, "cost": 126090768.0, "ctr": 13.299709608500464, "conversion": 1.3702134917701907, "roas": 11.69151368798071}, "monthly": {"1": {"sends": 809453.0, "clicks": 125650.0, "visits": 62604.0, "customers": 705.0, "revenue": 197019080.0, "cost": 15131282.0}, "2": {"sends": 1301194.0, "clicks": 216817.0, "visits": 68872.0, "customers": 972.0, "revenue": 270404200.0, "cost": 25409687.0}, "3": {"sends": 1535511.0, "clicks": 216752.0, "visits": 107433.0, "customers": 1398.0, "revenue": 450230980.0, "cost": 31338399.0}, "4": {"sends": 1588035.0, "clicks": 165376.0, "visits": 81896.0, "customers": 1377.0, "revenue": 341581580.0, "cost": 32121254.0}, "5": {"sends": 1098637.0, "clicks": 117653.0, "visits": 66142.0, "customers": 850.0, "revenue": 214956100.0, "cost": 22090146.0}}, "by_brand": {"잇미샤": 800551880.0, "이비엠": 117881400.0, "미샤": 533667860.0, "공통": 11403400.0, "시선": 10687400.0}, "by_channel": {"문자": 483397580.0, "카톡_일반": 980106960.0, "App Push": 6688900.0, "카톡_채팅방": 3998500.0}, "by_method": {"LMS": 476898680.0, "카톡(전체)": 984105460.0, "SMS": 6498900.0, "App Push": 6688900.0}, "brand_monthly": {"잇미샤": {"1": 133512300.0, "2": 166715740.0, "3": 195666660.0, "4": 179651680.0, "5": 125005500.0}, "이비엠": {"1": 9461700.0, "2": 31833000.0, "3": 24594900.0, "4": 34863100.0, "5": 17128700.0}, "미샤": {"1": 54045080.0, "2": 71855460.0, "3": 224427420.0, "4": 121205400.0, "5": 62134500.0}, "공통": {"3": 5542000.0, "4": 5861400.0}, "시선": {"5": 10687400.0}}, "weekly": {"01-02": {"sends": 0, "clicks": 4553.0, "visits": 1337.0, "customers": 21.0, "revenue": 3557920.0, "cost": 0.0}, "01-03": {"sends": 145694.0, "clicks": 31064.0, "visits": 15231.0, "customers": 170.0, "revenue": 42480180.0, "cost": 3057432.0}, "01-04": {"sends": 313679.0, "clicks": 39964.0, "visits": 22953.0, "customers": 307.0, "revenue": 88961720.0, "cost": 5567639.0}, "01-05": {"sends": 350080.0, "clicks": 50069.0, "visits": 23083.0, "customers": 207.0, "revenue": 62019260.0, "cost": 6506211.0}, "02-06": {"sends": 423504.0, "clicks": 82915.0, "visits": 19943.0, "customers": 227.0, "revenue": 67695680.0, "cost": 8185693.0}, "02-07": {"sends": 356842.0, "clicks": 51830.0, "visits": 18868.0, "customers": 310.0, "revenue": 92300360.0, "cost": 6671424.0}, "02-08": {"sends": 105238.0, "clicks": 33514.0, "visits": 6351.0, "customers": 103.0, "revenue": 27475560.0, "cost": 2720404.0}, "02-09": {"sends": 415610.0, "clicks": 48558.0, "visits": 23710.0, "customers": 332.0, "revenue": 82932600.0, "cost": 7832166.0}, "03-10": {"sends": 119956.0, "clicks": 35800.0, "visits": 10572.0, "customers": 140.0, "revenue": 38584700.0, "cost": 3164195.0}, "03-11": {"sends": 405106.0, "clicks": 54707.0, "visits": 33617.0, "customers": 462.0, "revenue": 196009740.0, "cost": 7892803.0}, "03-12": {"sends": 478076.0, "clicks": 60055.0, "visits": 26177.0, "customers": 319.0, "revenue": 99279380.0, "cost": 10038222.0}, "03-13": {"sends": 465947.0, "clicks": 57743.0, "visits": 31436.0, "customers": 391.0, "revenue": 98364780.0, "cost": 9009050.0}, "03-14": {"sends": 66426.0, "clicks": 8447.0, "visits": 5631.0, "customers": 86.0, "revenue": 17992380.0, "cost": 1234129.0}, "04-14": {"sends": 356669.0, "clicks": 25834.0, "visits": 14604.0, "customers": 278.0, "revenue": 100538800.0, "cost": 6642136.0}, "04-15": {"sends": 203598.0, "clicks": 29799.0, "visits": 11837.0, "customers": 253.0, "revenue": 52397200.0, "cost": 4557176.0}, "04-16": {"sends": 406528.0, "clicks": 44598.0, "visits": 26060.0, "customers": 442.0, "revenue": 92266100.0, "cost": 7911554.0}, "04-17": {"sends": 415588.0, "clicks": 40206.0, "visits": 18238.0, "customers": 278.0, "revenue": 69345480.0, "cost": 8400648.0}, "04-18": {"sends": 205652.0, "clicks": 24939.0, "visits": 11157.0, "customers": 126.0, "revenue": 27034000.0, "cost": 4609740.0}, "05-18": {"sends": 21866.0, "clicks": 3940.0, "visits": 1803.0, "customers": 44.0, "revenue": 15679000.0, "cost": 565237.0}, "05-19": {"sends": 159376.0, "clicks": 17210.0, "visits": 12864.0, "customers": 193.0, "revenue": 51011000.0, "cost": 3188310.0}, "05-20": {"sends": 451295.0, "clicks": 44743.0, "visits": 26233.0, "customers": 295.0, "revenue": 65120100.0, "cost": 9060729.0}, "05-21": {"sends": 463129.0, "clicks": 51547.0, "visits": 25242.0, "customers": 312.0, "revenue": 81795800.0, "cost": 9275870.0}, "05-22": {"sends": 2971.0, "clicks": 213.0, "visits": 0, "customers": 6.0, "revenue": 1350200.0, "cost": 0}}, "campaigns_top": [{"name": "I_기획전/이벤트", "sends": 0, "clicks": 26305.0, "visits": 16882.0, "customers": 289.0, "revenue": 65677480.0, "cost": 0.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_미샤데이10%할인+10%적립 (정상)", "sends": 134434.0, "clicks": 10316.0, "visits": 8547.0, "customers": 101.0, "revenue": 52852580.0, "cost": 2218161.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_신세계 강남 GRAND OPEN", "sends": 0, "clicks": 1561.0, "visits": 8547.0, "customers": 101.0, "revenue": 52852580.0, "cost": 0.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_4월 라스트세일", "sends": 16692.0, "clicks": 3785.0, "visits": 2786.0, "customers": 84.0, "revenue": 48837100.0, "cost": 431488.0, "brand": "미샤", "channel": "문자", "method": "LMS"}, {"name": "I_설날프로모션", "sends": 165685.0, "clicks": 10229.0, "visits": 5237.0, "customers": 111.0, "revenue": 32614960.0, "cost": 3043606.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "I_썸머캠페인2차", "sends": 282501.0, "clicks": 15887.0, "visits": 9825.0, "customers": 140.0, "revenue": 30627800.0, "cost": 5595109.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_스프링키워드샵", "sends": 76339.0, "clicks": 12082.0, "visits": 6745.0, "customers": 125.0, "revenue": 29006560.0, "cost": 1259594.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "I_26 SPRING 캠페인1차", "sends": 248738.0, "clicks": 20594.0, "visits": 10968.0, "customers": 97.0, "revenue": 28561760.0, "cost": 4913878.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "I_SUMMER PIECES you’ll love", "sends": 51204.0, "clicks": 8714.0, "visits": 6606.0, "customers": 116.0, "revenue": 26286400.0, "cost": 844866.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_26 SUMMER 캠페인1차", "sends": 207103.0, "clicks": 9087.0, "visits": 5992.0, "customers": 118.0, "revenue": 24437600.0, "cost": 3867711.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_레디포썸머", "sends": 0, "clicks": 7538.0, "visits": 4474.0, "customers": 134.0, "revenue": 24005800.0, "cost": 0.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "M_미샤데이_통합", "sends": 44355.0, "clicks": 3913.0, "visits": 2280.0, "customers": 45.0, "revenue": 23153200.0, "cost": 1035461.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_송혜교 2월 캠페인 (정상)", "sends": 123647.0, "clicks": 11879.0, "visits": 7331.0, "customers": 66.0, "revenue": 22134780.0, "cost": 2170571.0, "brand": "미샤", "channel": "문자", "method": "LMS"}, {"name": "M_송혜교 Q4 캠페인 (정상)", "sends": 74093.0, "clicks": 11036.0, "visits": 7846.0, "customers": 60.0, "revenue": 19637760.0, "cost": 1222535.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_미샤데이_상설", "sends": 0, "clicks": 2814.0, "visits": 1521.0, "customers": 32.0, "revenue": 19583800.0, "cost": 0.0, "brand": "미샤", "channel": "문자", "method": "LMS"}, {"name": "(버튼)I_기획전/이벤트", "sends": 0, "clicks": 5737.0, "visits": 4955.0, "customers": 70.0, "revenue": 17609800.0, "cost": 0.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_위클리 특가", "sends": 0, "clicks": 9830.0, "visits": 4451.0, "customers": 60.0, "revenue": 15720700.0, "cost": 0.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "M_Scene of Summer", "sends": 77466.0, "clicks": 11294.0, "visits": 8547.0, "customers": 40.0, "revenue": 15305500.0, "cost": 1278194.0, "brand": "시선", "channel": "App Push", "method": "App Push"}, {"name": "M_아울렛 온라인 단독상품 40%할인+추가 20~30%쿠폰", "sends": 0, "clicks": 3893.0, "visits": 2452.0, "customers": 41.0, "revenue": 15240300.0, "cost": 0.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_스프링캠페인3차", "sends": 127229.0, "clicks": 5067.0, "visits": 2287.0, "customers": 46.0, "revenue": 15034300.0, "cost": 2384435.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_아울렛 온라인단독상품 40%할인+20%쿠폰", "sends": 25262.0, "clicks": 7940.0, "visits": 3703.0, "customers": 27.0, "revenue": 14888900.0, "cost": 653022.0, "brand": "미샤", "channel": "문자", "method": "LMS"}, {"name": "M_BLOSSOM FAIR", "sends": 56056.0, "clicks": 1988.0, "visits": 1541.0, "customers": 31.0, "revenue": 14446700.0, "cost": 924924.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "E_나나 캠페인 (정상)", "sends": 118966.0, "clicks": 5330.0, "visits": 4346.0, "customers": 54.0, "revenue": 14446100.0, "cost": 1962940.0, "brand": "이비엠", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_아울렛 UP TO 60%+단독가10%", "sends": 0, "clicks": 12794.0, "visits": 4709.0, "customers": 64.0, "revenue": 14298800.0, "cost": 771726.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "Z 스프링웹에디 2차", "sends": 52027.0, "clicks": 3220.0, "visits": 2724.0, "customers": 52.0, "revenue": 14255400.0, "cost": 858446.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "Z웹에디 스프링1차:신상20%", "sends": 54851.0, "clicks": 2938.0, "visits": 2549.0, "customers": 56.0, "revenue": 14001280.0, "cost": 905042.0, "brand": "잇미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "M_Q5 송혜교 캠페인 오픈(정상)", "sends": 89059.0, "clicks": 3769.0, "visits": 3264.0, "customers": 32.0, "revenue": 13695300.0, "cost": 1469474.0, "brand": "미샤", "channel": "카톡_일반", "method": "카톡(전체)"}, {"name": "I_Z 썸머1차", "sends": 51693.0, "clicks": 8694.0, "visits": 4330.0, "customers": 64.0, "revenue": 13438300.0, "cost": 852935.0, "brand": "잇미샤", "channel": "문자", "method": "LMS"}, {"name": "E_라이브방송(정상/상설)", "sends": 118167.0, "clicks": 6439.0, "visits": 5482.0, "customers": 50.0, "revenue": 12997800.0, "cost": 1892030.0, "brand": "이비엠", "channel": "문자", "method": "SMS"}, {"name": "M_LAST PIECE 60%+(10%or20%) (상설)", "sends": 0, "clicks": 4543.0, "visits": 1353.0, "customers": 33.0, "revenue": 12638180.0, "cost": 0.0, "brand": "미샤", "channel": "문자", "method": "LMS"}], "rows_count": 457, "march_funnel": {"sends": 1535511.0, "clicks": 216752.0, "visits": 107433.0, "customers": 1398.0, "revenue": 450230980.0}};
+
+const fmtMan = (n) => (n/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만원';
+const fmtEok = (n) => (n/1e8).toFixed(2) + '억';
+const fmtM = (n) => (n/1e6).toFixed(0);
+const fmtNum = (n) => Math.round(n).toLocaleString('ko-KR');
+const fmtPct = (n) => (n).toFixed(2) + '%';
+
+// Subtitle
+document.getElementById('subtitle').textContent =
+  `2026년 1~5월 캠페인 성과 · 잇미샤·미샤·이비엠·공통 · 총 ${DATA.rows_count}건 캠페인 집계`;
+document.getElementById('updated').textContent =
+  '데이터 기준: 업로드된 CSV (수동 새로고침)';
+
+// KPI cards
+const kpis = [
+  {label:'총 발송 인원', value:(DATA.totals.sends/1e6).toFixed(2)+'M', sub:fmtNum(DATA.totals.sends)+' 명'},
+  {label:'클릭', value:fmtNum(DATA.totals.clicks), sub:'CTR ' + fmtPct(DATA.totals.ctr)},
+  {label:'주문 고객', value:fmtNum(DATA.totals.order_customers), sub:'전환율 ' + fmtPct(DATA.totals.conversion)},
+  {label:'판매 금액', value:fmtEok(DATA.totals.revenue), sub:'발송비 ' + fmtEok(DATA.totals.cost)},
+  {label:'ROAS', value:DATA.totals.roas.toFixed(2)+' x', sub:'광고비 대비 매출'},
+];
+document.getElementById('kpi-cards').innerHTML = kpis.map(k =>
+  `<div class="kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="sub">${k.sub}</div></div>`
+).join('');
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Color palette
+const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+
+// Monthly labels & data
+const months = Object.keys(DATA.monthly).map(Number).sort((a,b)=>a-b);
+const monthLabels = months.map(m => m + '월');
+const monthlyRev = months.map(m => DATA.monthly[m].revenue / 1e6);
+const monthlyRoas = months.map(m => {
+  const md = DATA.monthly[m];
+  return md.cost ? md.revenue / md.cost : 0;
+});
+const monthlyClicks = months.map(m => DATA.monthly[m].clicks);
+const monthlyConv = months.map(m => {
+  const md = DATA.monthly[m];
+  return md.visits ? md.customers / md.visits * 100 : 0;
+});
+
+Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#374151';
+
+// 1. Monthly revenue bar
+new Chart(document.getElementById('ch-monthly-rev'), {
+  type: 'bar',
+  data: { labels: monthLabels,
+    datasets: [{ label:'판매금액 (백만원)', data: monthlyRev, backgroundColor:'#3b82f6', borderRadius:6 }] },
+  options: { responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ y:{beginAtZero:true, ticks:{callback:v=>v.toLocaleString()}} } }
+});
+
+// 2. Monthly ROAS line
+new Chart(document.getElementById('ch-monthly-roas'), {
+  type: 'line',
+  data: { labels: monthLabels,
+    datasets: [{ label:'ROAS', data: monthlyRoas, borderColor:'#10b981',
+      backgroundColor:'rgba(16,185,129,0.1)', fill:true, tension:.35,
+      pointBackgroundColor:'#10b981', pointRadius:5 }] },
+  options: { responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ y:{beginAtZero:true, ticks:{callback:v=>v+'x'}} } }
+});
+
+// 3. Channel pie (overview)
+const channels = Object.keys(DATA.by_channel);
+const channelVals = channels.map(c => DATA.by_channel[c]);
+new Chart(document.getElementById('ch-channel-pie'), {
+  type: 'doughnut',
+  data: { labels: channels,
+    datasets:[{ data: channelVals, backgroundColor: COLORS, borderWidth:2, borderColor:'#fff' }] },
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${fmtEok(c.parsed)} (${(c.parsed/DATA.totals.revenue*100).toFixed(1)}%)`}} } }
+});
+
+// 4. Clicks vs conv combo
+new Chart(document.getElementById('ch-click-conv'), {
+  data: { labels: monthLabels,
+    datasets:[
+      { type:'bar', label:'클릭수', data: monthlyClicks, backgroundColor:'#60a5fa', borderRadius:6, yAxisID:'y' },
+      { type:'line', label:'전환율 (%)', data: monthlyConv, borderColor:'#ef4444',
+        backgroundColor:'#ef4444', tension:.3, yAxisID:'y1', pointRadius:5 }
+    ] },
+  options:{ responsive:true, maintainAspectRatio:false,
+    scales:{
+      y:{beginAtZero:true, position:'left', ticks:{callback:v=>(v/1000).toFixed(0)+'k'}},
+      y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:v=>v.toFixed(1)+'%'}}
+    } }
+});
+
+// === FUNNEL (March) ===
+const m3 = DATA.monthly['3'];
+const funnelStages = [
+  {label:'발송', value:m3.sends, base:m3.sends},
+  {label:'클릭', value:m3.clicks, base:m3.sends},
+  {label:'방문', value:m3.visits, base:m3.clicks},
+  {label:'주문 고객', value:m3.customers, base:m3.visits},
+];
+const maxF = m3.sends || 1;
+document.getElementById('funnel-content').innerHTML = funnelStages.map(s=>{
+  const pct = (s.value / maxF * 100).toFixed(1);
+  const rate = s.base ? (s.value/s.base*100).toFixed(2)+'%' : '-';
+  return `<div class="funnel-row">
+    <div class="funnel-stage">${s.label}</div>
+    <div class="funnel-bar"><div class="funnel-fill" style="width:${pct}%"></div></div>
+    <div class="funnel-val">${fmtNum(s.value)}</div>
+    <div class="funnel-rate">${rate}</div>
+  </div>`;
+}).join('');
+
+// Monthly funnel chart (stacked bars showing dropoff)
+new Chart(document.getElementById('ch-funnel'), {
+  type:'bar',
+  data:{ labels: monthLabels,
+    datasets:[
+      {label:'발송', data: months.map(m=>DATA.monthly[m].sends), backgroundColor:'#3b82f6'},
+      {label:'클릭', data: months.map(m=>DATA.monthly[m].clicks), backgroundColor:'#60a5fa'},
+      {label:'방문', data: months.map(m=>DATA.monthly[m].visits), backgroundColor:'#93c5fd'},
+      {label:'주문 고객', data: months.map(m=>DATA.monthly[m].customers*100), backgroundColor:'#ef4444',
+        // multiply ×100 to make visible; will note in tooltip
+       }
+    ] },
+  options:{ responsive:true, maintainAspectRatio:false, indexAxis:'x',
+    plugins:{ tooltip:{callbacks:{label:c=>{
+      let v = c.parsed.y;
+      if(c.dataset.label==='주문 고객') v = v/100;
+      return ` ${c.dataset.label}: ${fmtNum(v)}`;
+    }}}},
+    scales:{ y:{type:'logarithmic', ticks:{callback:v=>v.toLocaleString()}} } }
+});
+
+// === MONTHLY TAB ===
+let monthlyTable = `<thead><tr>
+<th>월</th><th class="num">발송</th><th class="num">클릭</th><th class="num">CTR</th>
+<th class="num">방문</th><th class="num">주문고객</th><th class="num">전환율</th>
+<th class="num">매출</th><th class="num">발송비</th><th class="num">ROAS</th>
+</tr></thead><tbody>`;
+months.forEach(m=>{
+  const d = DATA.monthly[m];
+  const ctr = d.sends ? (d.clicks/d.sends*100) : 0;
+  const conv = d.visits ? (d.customers/d.visits*100) : 0;
+  const roas = d.cost ? d.revenue/d.cost : 0;
+  monthlyTable += `<tr>
+    <td><b>${m}월</b></td>
+    <td class="num">${fmtNum(d.sends)}</td>
+    <td class="num">${fmtNum(d.clicks)}</td>
+    <td class="num">${ctr.toFixed(2)}%</td>
+    <td class="num">${fmtNum(d.visits)}</td>
+    <td class="num">${fmtNum(d.customers)}</td>
+    <td class="num">${conv.toFixed(2)}%</td>
+    <td class="num">${fmtEok(d.revenue)}</td>
+    <td class="num">${fmtEok(d.cost)}</td>
+    <td class="num"><b>${roas.toFixed(2)}x</b></td>
+  </tr>`;
+});
+monthlyTable += '</tbody>';
+document.getElementById('tbl-monthly').innerHTML = monthlyTable;
+
+// Monthly combo chart
+new Chart(document.getElementById('ch-monthly-combo'), {
+  data:{ labels: monthLabels,
+    datasets:[
+      {type:'bar', label:'매출 (백만원)', data: monthlyRev, backgroundColor:'#3b82f6', yAxisID:'y', borderRadius:6},
+      {type:'line', label:'ROAS', data: monthlyRoas, borderColor:'#10b981', backgroundColor:'#10b981', yAxisID:'y1', tension:.3, pointRadius:5}
+    ] },
+  options:{responsive:true, maintainAspectRatio:false,
+    scales:{ y:{beginAtZero:true, position:'left'},
+      y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:v=>v+'x'}} } }
+});
+
+// Brand monthly stacked
+const brands = Object.keys(DATA.brand_monthly);
+new Chart(document.getElementById('ch-brand-monthly'), {
+  type:'bar',
+  data:{ labels: monthLabels,
+    datasets: brands.map((b,i)=>({
+      label: b, backgroundColor: COLORS[i%COLORS.length],
+      data: months.map(m => (DATA.brand_monthly[b][m] || 0)/1e6)
+    })) },
+  options:{responsive:true, maintainAspectRatio:false,
+    scales:{ x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>v+'M'}} },
+    plugins:{ tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(0)}백만원`}} } }
+});
+
+// === CHANNEL TAB ===
+const brandsList = Object.keys(DATA.by_brand);
+new Chart(document.getElementById('ch-brand-pie'), {
+  type:'doughnut',
+  data:{ labels: brandsList,
+    datasets:[{data: brandsList.map(b=>DATA.by_brand[b]), backgroundColor: COLORS, borderWidth:2, borderColor:'#fff'}] },
+  options:{responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${fmtEok(c.parsed)} (${(c.parsed/DATA.totals.revenue*100).toFixed(1)}%)`}} } }
+});
+
+new Chart(document.getElementById('ch-channel-pie2'), {
+  type:'doughnut',
+  data:{ labels: channels,
+    datasets:[{data: channelVals, backgroundColor: COLORS, borderWidth:2, borderColor:'#fff'}] },
+  options:{responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${fmtEok(c.parsed)} (${(c.parsed/DATA.totals.revenue*100).toFixed(1)}%)`}} } }
+});
+
+const methods = Object.keys(DATA.by_method);
+new Chart(document.getElementById('ch-method'), {
+  type:'bar',
+  data:{ labels: methods,
+    datasets:[{label:'매출', data: methods.map(m=>DATA.by_method[m]/1e6), backgroundColor: COLORS, borderRadius:6}] },
+  options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    plugins:{ legend:{display:false} },
+    scales:{ x:{ticks:{callback:v=>v+'M'}} } }
+});
+
+let chTable = `<thead><tr><th>채널</th><th class="num">매출</th><th class="num">비중</th></tr></thead><tbody>`;
+channels.sort((a,b)=>DATA.by_channel[b]-DATA.by_channel[a]).forEach(c=>{
+  chTable += `<tr><td>${c}</td><td class="num">${fmtEok(DATA.by_channel[c])}</td><td class="num">${(DATA.by_channel[c]/DATA.totals.revenue*100).toFixed(1)}%</td></tr>`;
+});
+chTable += '</tbody>';
+document.getElementById('tbl-channel').innerHTML = chTable;
+
+// === WEEKLY TAB ===
+const weeks = Object.keys(DATA.weekly).sort();
+const weekLabels = weeks.map(w => { const [m,wk]=w.split('-'); return `${+m}월${+wk}주`; });
+const weekRev = weeks.map(w => DATA.weekly[w].revenue/1e6);
+const weekClicks = weeks.map(w => DATA.weekly[w].clicks);
+
+new Chart(document.getElementById('ch-weekly'), {
+  data:{ labels: weekLabels,
+    datasets:[
+      {type:'bar', label:'매출 (백만원)', data: weekRev, backgroundColor:'#3b82f6', yAxisID:'y', borderRadius:4},
+      {type:'line', label:'클릭', data: weekClicks, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', tension:.3, yAxisID:'y1', pointRadius:3, fill:true}
+    ] },
+  options:{responsive:true, maintainAspectRatio:false,
+    scales:{ y:{beginAtZero:true, position:'left', ticks:{callback:v=>v+'M'}},
+      y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:v=>(v/1000).toFixed(0)+'k'}} } }
+});
+
+let wkTable = `<thead><tr>
+<th>주차</th><th class="num">발송</th><th class="num">클릭</th><th class="num">고객</th><th class="num">매출</th><th class="num">ROAS</th>
+</tr></thead><tbody>`;
+weeks.forEach(w=>{
+  const d = DATA.weekly[w]; const [m,wk]=w.split('-');
+  const roas = d.cost ? d.revenue/d.cost : 0;
+  wkTable += `<tr>
+    <td>${+m}월 ${+wk}주</td>
+    <td class="num">${fmtNum(d.sends)}</td>
+    <td class="num">${fmtNum(d.clicks)}</td>
+    <td class="num">${fmtNum(d.customers)}</td>
+    <td class="num">${fmtEok(d.revenue)}</td>
+    <td class="num">${roas.toFixed(1)}x</td>
+  </tr>`;
+});
+wkTable += '</tbody>';
+document.getElementById('tbl-weekly').innerHTML = wkTable;
+
+// === CAMPAIGNS TAB ===
+let cmpTable = `<thead><tr>
+<th>#</th><th>캠페인명</th><th>브랜드</th><th>채널</th>
+<th class="num">발송</th><th class="num">클릭</th><th class="num">고객</th>
+<th class="num">매출</th><th class="num">ROAS</th>
+</tr></thead><tbody>`;
+DATA.campaigns_top.forEach((c,i)=>{
+  const roas = c.cost ? c.revenue/c.cost : 0;
+  cmpTable += `<tr>
+    <td>${i+1}</td>
+    <td>${c.name}</td>
+    <td>${c.brand}</td>
+    <td>${c.channel}</td>
+    <td class="num">${fmtNum(c.sends)}</td>
+    <td class="num">${fmtNum(c.clicks)}</td>
+    <td class="num">${fmtNum(c.customers)}</td>
+    <td class="num">${fmtEok(c.revenue)}</td>
+    <td class="num">${roas.toFixed(1)}x</td>
+  </tr>`;
+});
+cmpTable += '</tbody>';
+document.getElementById('tbl-campaigns').innerHTML = cmpTable;
+</script>
+</body>
+</html>
